@@ -58,6 +58,7 @@ def test_create_file(api_client):
     assert res.json.get("name") == "file.txt"
     assert res.json.get("size") == "50"
 
+
 def test_create_file_without_data_gives_400(api_client):
     res = api_client.create_file(name=None, size=None, expect_errors=True)
 
@@ -92,7 +93,7 @@ def test_no_datanodes_gives_empty_list(api_client):
 
 
 def test_list_datanodes(api_client):
-    res = api_client.create_datanode("127.0.0.1", 8000)
+    res = api_client.create_datanode(host="127.0.0.1", port=8000)
     did = res.json.get("id")
     list_response = api_client.list_datanodes()
 
@@ -109,7 +110,7 @@ def test_gives_404_if_datanode_not_found(api_client):
 
 
 def test_create_datanode(api_client):
-    res = api_client.create_datanode("127.0.0.1", 8000)
+    res = api_client.create_datanode(host="127.0.0.1", port=8000)
     did = res.json.get("id")
     res = api_client.get_datanode(did)
 
@@ -118,9 +119,15 @@ def test_create_datanode(api_client):
     assert res.json.get("port") == "8000"
 
 
+def test_create_datanode_gives_400_if_address_and_port_not_given(api_client):
+    res = api_client.create_datanode(expect_errors=True)
+
+    assert res.status_code == 400
+
+
 def test_duplicate_datanode_gives_error_400(api_client):
-    res = api_client.create_datanode("127.0.0.1", 8000)
-    res = api_client.create_datanode("127.0.0.1", 8000, expect_errors=True)
+    res = api_client.create_datanode(host="127.0.0.1", port=8000)
+    res = api_client.create_datanode(host="127.0.0.1", port=8000, expect_errors=True)
 
     assert res.status_code == 400
 
@@ -150,7 +157,7 @@ def test_add_blocks_with_nonexisting_datanode_gives_404(api_client):
 
 
 def test_adds_blocks_to_file_successfully(api_client):
-    create_node_res = api_client.create_datanode("127.0.0.1", 8000)
+    create_node_res = api_client.create_datanode(host="127.0.0.1", port=8000)
     did = create_node_res.json.get("id")
     create_file_res = api_client.create_file(name="file.txt", size=50)
     fid = create_file_res.json.get("id")

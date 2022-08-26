@@ -6,6 +6,8 @@ from metadata.filesystem.domain import values
 class DataNode(model.AggregateRoot):
     def __init__(self, host, port, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        if not host or not port:
+            raise ValueError
         self.address = values.Address(host, port)
     
     @classmethod

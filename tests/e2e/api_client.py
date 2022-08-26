@@ -33,7 +33,7 @@ def create_file(client, name=None, size=None, expect_errors=True):
 
     if name:
         data["name"] = name
-    
+
     if size:
         data["size"] = size
 
@@ -66,10 +66,16 @@ def delete_file(fid, client: TestApp, expect_errors=False):
 
 
 @use_client
-def create_datanode(host, port, client: TestApp, expect_errors=False):
-    res = client.post(
-        "/dfs/datanodes", {"host": host, "port": port}, expect_errors=expect_errors
-    )
+def create_datanode(client: TestApp, host=None, port=None, expect_errors=False):
+    data = {}
+
+    if host:
+        data["host"] = host
+
+    if port:
+        data["port"] = port
+
+    res = client.post("/dfs/datanodes", data, expect_errors=expect_errors)
 
     if not expect_errors:
         assert res.status_code == 201

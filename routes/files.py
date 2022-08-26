@@ -18,9 +18,10 @@ def routes(bus):
 
     @route.post("/")
     def create():
-        fid = uuid.uuid4().hex
         name = request.forms.get("name")
         size = request.forms.get("size")
+        
+        fid = uuid.uuid4().hex
         response.status = 201
         data = {"id": fid}
 
