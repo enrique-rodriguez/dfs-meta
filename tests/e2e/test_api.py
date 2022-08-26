@@ -1,0 +1,170 @@
+import os
+import uuid
+import pytest
+from . import api_client as client
+
+
+@pytest.fixture
+def api_client(tmp_path):
+    client.set_config(
+        {
+            "basedir": str(tmp_path),
+            "db": {"dbpath": "data.bin", "read_model_path": "data.json"},
+        }
+    )
+
+    return client
+
+
+############################################################################################
+# File
+############################################################################################
+
+
+def test_no_files_gives_empty_list(api_client):
+    res = api_client.list_files()
+
+    assert res.status_code == 200
+    assert res.json == []
+
+
+def test_list_files(api_client):
+    res = api_client.create_file("file.txt", 50)
+
+    fid = res.json.get("id")
+
+    list_res = api_client.list_files()
+
+    assert list_res.status_code == 200
+    assert list_res.json == [{"id": fid, "name": "file.txt", "size": "50"}]
+
+
+def test_gives_404_if_file_not_found(api_client):
+    fid = uuid.uuid4().hex
+
+    res = api_client.get_file(fid, expect_errors=True)
+
+    assert res.status_code == 404
+
+
+def test_create_file(api_client):
+    res = api_client.create_file("file.txt", 50)
+
+    fid = res.json.get("id")
+
+    res = api_client.get_file(fid)
+
+    assert res.status_code == 200
+    assert res.json.get("name") == "file.txt"
+    assert res.json.get("size") == "50"
+
+
+def test_delete_file(api_client):
+    create_res = api_client.create_file("file.txt", 50)
+
+    fid = create_res.json.get("id")
+
+    delete_res = api_client.delete_file(fid)
+
+    get_file_res = api_client.get_file(fid, expect_errors=True)
+    get_blocks_res = api_client.get_blocks(fid)
+
+    assert delete_res.status_code == 200
+    assert get_file_res.status_code == 404
+    assert get_blocks_res.json == []
+
+
+##########################################################################################
+# DataNode
+##########################################################################################
+
+
+def test_no_datanodes_gives_empty_list(api_client):
+    res = api_client.list_datanodes()
+
+    assert res.status_code == 200
+    assert res.json == []
+
+
+def test_list_datanodes(api_client):
+    res = api_client.create_datanode("127.0.0.1", 8000)
+    did = res.json.get("id")
+    list_response = api_client.list_datanodes()
+
+    assert list_response.status_code == 200
+    assert list_response.json == [{"host": "127.0.0.1", "id": did, "port": "8000"}]
+
+
+def test_gives_404_if_datanode_not_found(api_client):
+    did = uuid.uuid4().hex
+
+    res = api_client.get_datanode(did, expect_errors=True)
+
+    assert res.status_code == 404
+
+
+def test_create_datanode(api_client):
+    res = api_client.create_datanode("127.0.0.1", 8000)
+    did = res.json.get("id")
+    res = api_client.get_datanode(did)
+
+    assert res.status_code == 200
+    assert res.json.get("host") == "127.0.0.1"
+    assert res.json.get("port") == "8000"
+
+
+def test_duplicate_datanode_gives_error_400(api_client):
+    res = api_client.create_datanode("127.0.0.1", 8000)
+    res = api_client.create_datanode("127.0.0.1", 8000, expect_errors=True)
+
+    assert res.status_code == 400
+
+
+##########################################################################################
+# Blocks
+##########################################################################################
+
+
+def test_add_blocks_to_nonexisting_file_gives_404(api_client):
+    fid = uuid.uuid4().hex
+    blocks = []
+    res = api_client.add_blocks(fid, blocks, expect_errors=True)
+
+    assert res.status_code == 404
+
+
+def test_add_blocks_with_nonexisting_datanode_gives_404(api_client):
+    create_res = api_client.create_file("file.txt", 50)
+    fid = create_res.json.get("id")
+    did = uuid.uuid4().hex
+
+    blocks = [{"id": uuid.uuid4().hex, "datanode_id": did}]
+    res = api_client.add_blocks(fid, blocks, expect_errors=True)
+
+    assert res.status_code == 404
+
+
+def test_adds_blocks_to_file_successfully(api_client):
+    create_node_res = api_client.create_datanode("127.0.0.1", 8000)
+    did = create_node_res.json.get("id")
+    create_file_res = api_client.create_file("file.txt", 50)
+    fid = create_file_res.json.get("id")
+    bid = uuid.uuid4().hex
+
+    blocks = [{"id": bid, "datanode_id": did}]
+    add_blocks_res = api_client.add_blocks(fid, blocks)
+    get_blocks_res = api_client.get_blocks(fid)
+
+    assert add_blocks_res.status_code == 200
+    assert get_blocks_res.status_code == 200
+    assert get_blocks_res.json == [
+        {
+            "file_id": fid,
+            "id": bid,
+            "datanode": {
+                "id": did,
+                "host": "127.0.0.1",
+                "port": "8000",
+            },
+        }
+    ]

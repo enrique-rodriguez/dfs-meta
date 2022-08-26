@@ -1,0 +1,10 @@
+{
+    "db": {
+        "dbpath": "data.bin",
+        "read_model_path": "db.json"
+    },
+    "server": {
+        "host": "localhost",
+        "port": 8080
+    }
+}
