@@ -17,14 +17,15 @@ def routes(bus):
         host = request.forms.get("host")
         port = request.forms.get("port")
         did = uuid.uuid4().hex
+        data = {"id": did}
 
         try:
             bus.handle(commands.CreateDataNode(datanode_id=did, host=host, port=port))
         except exceptions.DuplicateDataNodeError:
             response.status = 400
-            return {}
+            data = {}
 
-        return {"id": did}
+        return data
 
     @route.get("/")
     def list():

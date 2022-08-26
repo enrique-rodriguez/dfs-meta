@@ -25,6 +25,8 @@ class Block(model.Entity):
 class File(model.AggregateRoot):
     def __init__(self, name, size, blocks=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        if not name or not size:
+            raise ValueError
         self.name = name
         self.size = size
         self.blocks = blocks or list()
@@ -35,7 +37,7 @@ class File(model.AggregateRoot):
         return self.events.append(events.BlockAdded(block))
 
     @classmethod
-    def new(cls, *args, **kwargs):
-        obj = super().new(*args, **kwargs)
+    def new(cls, name, size, *args, **kwargs):
+        obj = super().new(name=name, size=size,*args, **kwargs)
         obj.events.append(events.FileCreated(obj))
         return obj

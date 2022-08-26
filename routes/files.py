@@ -21,12 +21,16 @@ def routes(bus):
         fid = uuid.uuid4().hex
         name = request.forms.get("name")
         size = request.forms.get("size")
-
-        bus.handle(commands.CreateFile(id=fid, name=name, size=size))
-
         response.status = 201
+        data = {"id": fid}
 
-        return {"id": fid}
+        try:
+            bus.handle(commands.CreateFile(id=fid, name=name, size=size))
+        except ValueError:
+            response.status = 400
+            data = {}
+
+        return data
 
     @route.get("/<fid>")
     def get(fid):
@@ -43,7 +47,7 @@ def routes(bus):
         except FileNotFoundError:
             response.status = 404
 
-        return dict()
+        return {}
 
     @route.post("/<fid>/blocks")
     def add_blocks(fid):
@@ -54,9 +58,7 @@ def routes(bus):
             response.status = 404
         except exceptions.DataNodeNotFoundError:
             response.status = 404
-        except Exception as e:
-            print(e)
-        return dict()
+        return {}
 
     @route.get("/<fid>/blocks")
     def get_blocks(fid):

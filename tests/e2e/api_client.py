@@ -28,10 +28,19 @@ def list_files(client: TestApp):
 
 
 @use_client
-def create_file(name, size, client):
-    res = client.post("/dfs/files", {"name": name, "size": size})
+def create_file(client, name=None, size=None, expect_errors=True):
+    data = {}
 
-    assert res.status_code == 201
+    if name:
+        data["name"] = name
+    
+    if size:
+        data["size"] = size
+
+    res = client.post("/dfs/files", data, expect_errors=expect_errors)
+
+    if not expect_errors:
+        assert res.status_code == 201
 
     return res
 

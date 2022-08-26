@@ -29,7 +29,7 @@ def test_no_files_gives_empty_list(api_client):
 
 
 def test_list_files(api_client):
-    res = api_client.create_file("file.txt", 50)
+    res = api_client.create_file(name="file.txt", size=50)
 
     fid = res.json.get("id")
 
@@ -48,7 +48,7 @@ def test_gives_404_if_file_not_found(api_client):
 
 
 def test_create_file(api_client):
-    res = api_client.create_file("file.txt", 50)
+    res = api_client.create_file(name="file.txt", size=50)
 
     fid = res.json.get("id")
 
@@ -58,9 +58,14 @@ def test_create_file(api_client):
     assert res.json.get("name") == "file.txt"
     assert res.json.get("size") == "50"
 
+def test_create_file_without_data_gives_400(api_client):
+    res = api_client.create_file(name=None, size=None, expect_errors=True)
+
+    assert res.status_code == 400
+
 
 def test_delete_file(api_client):
-    create_res = api_client.create_file("file.txt", 50)
+    create_res = api_client.create_file(name="file.txt", size=50)
 
     fid = create_res.json.get("id")
 
@@ -134,7 +139,7 @@ def test_add_blocks_to_nonexisting_file_gives_404(api_client):
 
 
 def test_add_blocks_with_nonexisting_datanode_gives_404(api_client):
-    create_res = api_client.create_file("file.txt", 50)
+    create_res = api_client.create_file(name="file.txt", size=50)
     fid = create_res.json.get("id")
     did = uuid.uuid4().hex
 
@@ -147,7 +152,7 @@ def test_add_blocks_with_nonexisting_datanode_gives_404(api_client):
 def test_adds_blocks_to_file_successfully(api_client):
     create_node_res = api_client.create_datanode("127.0.0.1", 8000)
     did = create_node_res.json.get("id")
-    create_file_res = api_client.create_file("file.txt", 50)
+    create_file_res = api_client.create_file(name="file.txt", size=50)
     fid = create_file_res.json.get("id")
     bid = uuid.uuid4().hex
 
