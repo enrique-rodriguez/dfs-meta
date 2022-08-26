@@ -42,7 +42,7 @@
         },
         "dfs-shared": {
             "git": "https://github.com/enrique-rodriguez/dfs-shared",
-            "ref": "575a430761ecc7944c76359e4260c61788044774"
+            "ref": "9a4818b92d96e2988658092bf0b3f85161e11b41"
         },
         "idna": {
             "hashes": [
