@@ -7,7 +7,10 @@ class JsonDatabase:
         self.path = path
         self.staging = list()
         self.auto_commit = auto_commit
-        self.objects = self.get_objects(path)
+        self.load_objects()
+    
+    def load_objects(self):
+        self.objects = self.get_objects(self.path)
 
     def get_objects(self, path):
         if not os.path.exists(path):
@@ -31,6 +34,7 @@ class JsonDatabase:
             self.commit()
 
     def get(self, key, default=None):
+        self.load_objects()
         return self.objects.get(key, default)
 
     def rollback(self):
