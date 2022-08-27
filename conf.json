@@ -5,6 +5,7 @@
     },
     "server": {
         "host": "localhost",
-        "port": 8080
+        "port": 8080,
+        "memfile_max": 16777216
     }
 }

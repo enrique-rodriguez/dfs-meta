@@ -10,6 +10,7 @@ def api_client(tmp_path):
         {
             "basedir": str(tmp_path),
             "db": {"dbpath": "data.bin", "read_model_path": "data.json"},
+            "server": {}
         }
     )
 
