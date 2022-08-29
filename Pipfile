@@ -8,6 +8,7 @@ bottle = "*"
 requests = "*"
 dfs-shared = {git = "https://github.com/enrique-rodriguez/dfs-shared"}
 paste = "*"
+pika = "*"
 
 [dev-packages]
 pytest = "*"

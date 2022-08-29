@@ -5,9 +5,10 @@ from metadata.filesystem.domain import events
 from metadata.filesystem.domain import commands
 from metadata.filesystem.domain import exceptions
 from metadata.filesystem.domain import specifications
+from metadata.filesystem.application.publisher import EventPublisher
 
 
-def create_datanode(cmd: commands.CreateDataNode, uow: UnitOfWork):
+def create_datanode(cmd: commands.CreateDataNode, uow: UnitOfWork, **deps):
     spec = specifications.DataNodeByHostAndPortSpec(cmd.host, cmd.port)
 
     if uow.repository.get_by_spec(model.DataNode, spec):
@@ -19,7 +20,7 @@ def create_datanode(cmd: commands.CreateDataNode, uow: UnitOfWork):
         uow.commit()
 
 
-def create_file(cmd: commands.CreateFile, uow: UnitOfWork):
+def create_file(cmd: commands.CreateFile, uow: UnitOfWork, **deps):
     file = model.File.new(id=cmd.id, name=cmd.name, size=cmd.size)
 
     with uow:
@@ -27,7 +28,7 @@ def create_file(cmd: commands.CreateFile, uow: UnitOfWork):
         uow.commit()
 
 
-def delete_file(cmd: commands.DeleteFile, uow: UnitOfWork):
+def delete_file(cmd: commands.DeleteFile, uow: UnitOfWork, **deps):
     if not (file := uow.repository.get(model.File, id=cmd.file_id)):
         raise FileNotFoundError
 
@@ -38,7 +39,7 @@ def delete_file(cmd: commands.DeleteFile, uow: UnitOfWork):
     uow.add_event(events.FileDeleted(file))
 
 
-def add_blocks(cmd: commands.AddBlocks, uow: UnitOfWork):
+def add_blocks(cmd: commands.AddBlocks, uow: UnitOfWork, **deps):
     if not (file := uow.repository.get(model.File, id=cmd.file_id)):
         raise FileNotFoundError
     node_cache = []
@@ -55,7 +56,7 @@ def add_blocks(cmd: commands.AddBlocks, uow: UnitOfWork):
         uow.commit()
 
 
-def add_file_to_read_model(event: events.FileCreated, uow: UnitOfWork):
+def add_file_to_read_model(event: events.FileCreated, uow: UnitOfWork, **deps):
     files = uow.read_model.get("files", list())
     f = event.file
 
@@ -71,7 +72,7 @@ def add_file_to_read_model(event: events.FileCreated, uow: UnitOfWork):
     uow.read_model.commit()
 
 
-def remove_file_from_read_model(event: events.FileDeleted, uow: UnitOfWork):
+def remove_file_from_read_model(event: events.FileDeleted, uow: UnitOfWork, **deps):
     file = event.file
     files = uow.read_model.get("files", list())
 
@@ -81,7 +82,7 @@ def remove_file_from_read_model(event: events.FileDeleted, uow: UnitOfWork):
     uow.read_model.commit()
 
 
-def add_datanode_to_read_model(event: events.DataNodeCreated, uow: UnitOfWork):
+def add_datanode_to_read_model(event: events.DataNodeCreated, uow: UnitOfWork, **deps):
     datanodes = uow.read_model.get("datanodes", list())
     dnode = event.datanode
 
@@ -97,7 +98,7 @@ def add_datanode_to_read_model(event: events.DataNodeCreated, uow: UnitOfWork):
     uow.read_model.commit()
 
 
-def add_block_to_read_model(event: events.BlockAdded, uow: UnitOfWork):
+def add_block_to_read_model(event: events.BlockAdded, uow: UnitOfWork, **deps):
     blk = event.block
     blocks = uow.read_model.get("blocks", list())
     dnode = uow.repository.get(model.DataNode, id=blk.datanode_id)
@@ -118,10 +119,23 @@ def add_block_to_read_model(event: events.BlockAdded, uow: UnitOfWork):
     uow.read_model.commit()
 
 
-def remove_blocks_from_read_model(event: events.FileDeleted, uow: UnitOfWork):
+def remove_blocks_from_read_model(event: events.FileDeleted, uow: UnitOfWork, **deps):
     file = event.file
     blocks = uow.read_model.get("blocks", list())
     blocks = list(filter(lambda b: b.get("file_id") != file.id, blocks))
 
     uow.read_model.set("blocks", blocks)
     uow.read_model.commit()
+
+
+def publish_file_deleted_event(
+    event: events.FileDeleted, publisher: EventPublisher, **deps
+):
+
+    file = event.file
+
+    publisher.publish("metadata", "file_deleted", {
+        'id': file.id,
+        'name': file.name,
+        'size': file.size,
+    })

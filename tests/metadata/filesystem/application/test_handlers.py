@@ -1,6 +1,7 @@
 import uuid
 import pytest
 from metadata.filesystem.domain import model
+from metadata.filesystem.domain import events
 from metadata.filesystem.domain import commands
 from metadata.filesystem.domain import exceptions
 
@@ -50,6 +51,24 @@ def test_deletes_file(bus, uow):
 
     assert uow.committed
     assert uow.repository.get(model.File, id=fid) == None
+
+
+def test_publishes_file_deleted_event(bus, publisher):
+    fid = uuid.uuid4().hex
+
+    history = [
+        commands.CreateFile(id=fid, name="file.txt", size=50),
+        commands.DeleteFile(file_id=fid),
+    ]
+
+    for cmd in history:
+        bus.handle(cmd)
+
+    data = publisher.published["file_deleted"][0]
+
+    assert data.get("id") == fid
+    assert data.get("name") == "file.txt"
+    assert data.get("size") == 50
 
 
 def test_adds_blocks_to_file_raises_error_if_datanode_not_found(bus, uow):

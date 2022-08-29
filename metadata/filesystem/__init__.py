@@ -18,5 +18,6 @@ EVENT_HANDLERS = {
     events.FileDeleted: [
         handlers.remove_file_from_read_model,
         handlers.remove_blocks_from_read_model,
+        handlers.publish_file_deleted_event,
     ],
 }
