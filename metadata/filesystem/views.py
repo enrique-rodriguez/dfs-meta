@@ -1,3 +1,5 @@
+import time
+
 def get_object_or_none(collection, condition):
     try:
         return next(item for item in collection if condition(item))
@@ -23,5 +25,7 @@ def blocks(fid, uow):
     return list(filter(lambda b: b.get("file_id") == fid, blocks))
 
 
-def list_datanodes(uow):
-    return uow.read_model.get("datanodes", list())
+def list_datanodes(uow, timeout=20):
+    nodes = uow.read_model.get("datanodes", list())
+    nodes = filter(lambda d: (time.time()-int(d.get("timestamp")) <= timeout), nodes)
+    return list(nodes)

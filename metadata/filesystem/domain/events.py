@@ -21,3 +21,8 @@ class BlockAdded(events.Event):
 @dataclass(frozen=True)
 class DataNodeCreated(events.Event):
     datanode: model.DataNode
+
+
+@dataclass(frozen=True)
+class DataNodeUpdated(events.Event):
+    datanode: model.DataNode

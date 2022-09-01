@@ -1,20 +1,26 @@
+import time
 from dfs_shared.domain import model
 from metadata.filesystem.domain import events
 from metadata.filesystem.domain import values
 
 
 class DataNode(model.AggregateRoot):
-    def __init__(self, host, port, *args, **kwargs):
+    def __init__(self, host, port, timestamp=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not host or not port:
             raise ValueError
         self.address = values.Address(host, port)
-    
+        self.timestamp = timestamp or time.time()
+        
     @classmethod
     def new(cls, *args, **kwargs):
         obj = super().new(*args, **kwargs)
         obj.events.append(events.DataNodeCreated(obj))
         return obj
+    
+    def set_timestamp(self, new_timestamp):
+        self.timestamp = new_timestamp
+        self.events.append(events.DataNodeUpdated(self))
 
 
 class Block(model.Entity):

@@ -1,7 +1,13 @@
 import os
+import time
 import uuid
 import pytest
 from . import api_client as client
+
+
+def remove_property(dictionary, property):
+    dictionary.pop(property, None)
+    return dictionary
 
 
 @pytest.fixture
@@ -10,7 +16,7 @@ def api_client(tmp_path):
         {
             "basedir": str(tmp_path),
             "db": {"dbpath": "data.bin", "read_model_path": "data.json"},
-            "server": {}
+            "server": {},
         }
     )
 
@@ -80,6 +86,12 @@ def test_delete_file(api_client):
     assert get_file_res.status_code == 404
     assert get_blocks_res.json == []
 
+def test_delete_file_not_found_gives_404(api_client):
+    delete_res = api_client.delete_file(uuid.uuid4().hex, expect_errors=True)
+
+    assert delete_res.status_code == 404
+
+
 
 ##########################################################################################
 # DataNode
@@ -98,9 +110,11 @@ def test_list_datanodes(api_client):
     did = res.json.get("id")
     list_response = api_client.list_datanodes()
 
-    assert list_response.status_code == 200
-    assert list_response.json == [{"host": "127.0.0.1", "id": did, "port": "8000"}]
+    # Remove timestamp property to avoid assertion failures
+    json = list(map(lambda x: remove_property(x, "timestamp"), list_response.json))
 
+    assert list_response.status_code == 200
+    assert json == [{"id": did, "host": "127.0.0.1", "port": "8000"}]
 
 def test_gives_404_if_datanode_not_found(api_client):
     did = uuid.uuid4().hex
@@ -122,13 +136,6 @@ def test_create_datanode(api_client):
 
 def test_create_datanode_gives_400_if_address_and_port_not_given(api_client):
     res = api_client.create_datanode(expect_errors=True)
-
-    assert res.status_code == 400
-
-
-def test_duplicate_datanode_gives_error_400(api_client):
-    res = api_client.create_datanode(host="127.0.0.1", port=8000)
-    res = api_client.create_datanode(host="127.0.0.1", port=8000, expect_errors=True)
 
     assert res.status_code == 400
 
