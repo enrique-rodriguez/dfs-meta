@@ -3,8 +3,30 @@ from unittest import mock
 from .uow import PickleUnitOfWork
 from metadata.filesystem import EVENT_HANDLERS
 from metadata.filesystem import COMMAND_HANDLERS
+from dfs_shared.application import message_bus
 from metadata.filesystem.infrastructure import rabbitmq_publisher
-from metadata.filesystem.application.message_bus import MessageBus
+
+
+class MessageBus(message_bus.MessageBus):
+    def __init__(self, uow, command_handlers, event_handlers, **deps):
+        super().__init__(uow, command_handlers, event_handlers)
+        self.deps = deps
+
+    def handle_command(self, command):
+        handler = self.command_handlers.get(type(command))
+
+        if not handler:
+            raise ValueError(
+                f"Handler for command '{command.__class__.__name__}' not found."
+            )
+
+        handler(command, uow=self.uow, **self.deps)
+
+    def handle_event(self, event):
+        handlers = self.event_handlers.get(type(event), list())
+
+        for handler in handlers:
+            handler(event, uow=self.uow, **self.deps)
 
 
 def get_unit_of_work(basedir, db, **config):

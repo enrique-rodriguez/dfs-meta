@@ -1,5 +1,4 @@
 {
-    "debug": true,
     "db": {
         "dbpath": "data.bin",
         "read_model_path": "db.json"

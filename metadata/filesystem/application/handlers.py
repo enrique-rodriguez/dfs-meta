@@ -1,4 +1,3 @@
-import time
 from dfs_shared.application.uow import UnitOfWork
 
 from metadata.filesystem.domain import model
@@ -12,14 +11,11 @@ from metadata.filesystem.application.publisher import EventPublisher
 def create_datanode(cmd: commands.CreateDataNode, uow: UnitOfWork, **deps):
     spec = specifications.DataNodeByHostAndPortSpec(cmd.host, cmd.port)
 
-    datanode = uow.repository.get_by_spec(model.DataNode, spec)
-
-    if datanode:
-        datanode.set_timestamp(time.time())
-    else:
-        datanode = model.DataNode.new(cmd.host, cmd.port, id=cmd.datanode_id)
+    if uow.repository.get_by_spec(model.DataNode, spec):
+        raise exceptions.DuplicateDataNodeError
 
     with uow:
+        datanode = model.DataNode.new(cmd.host, cmd.port, id=cmd.datanode_id)
         uow.repository.save(datanode)
         uow.commit()
 
@@ -60,17 +56,6 @@ def add_blocks(cmd: commands.AddBlocks, uow: UnitOfWork, **deps):
         uow.commit()
 
 
-def update_datanode_timestamp_from_read_model(
-    event: events.DataNodeUpdated, uow: UnitOfWork, **deps
-):
-    datanodes = uow.read_model.get("datanodes", list())
-
-    datanode = next(d for d in datanodes if d.get("id") == event.datanode.id)
-    datanode["timestamp"] = event.datanode.timestamp
-
-    uow.read_model.commit()
-
-
 def add_file_to_read_model(event: events.FileCreated, uow: UnitOfWork, **deps):
     files = uow.read_model.get("files", list())
     f = event.file
@@ -106,7 +91,6 @@ def add_datanode_to_read_model(event: events.DataNodeCreated, uow: UnitOfWork, *
             "id": dnode.id,
             "host": dnode.address.host,
             "port": dnode.address.port,
-            "timestamp": dnode.timestamp,
         }
     )
 
@@ -150,12 +134,8 @@ def publish_file_deleted_event(
 
     file = event.file
 
-    publisher.publish(
-        "metadata",
-        "file_deleted",
-        {
-            "id": file.id,
-            "name": file.name,
-            "size": file.size,
-        },
-    )
+    publisher.publish("metadata", "file_deleted", {
+        'id': file.id,
+        'name': file.name,
+        'size': file.size,
+    })

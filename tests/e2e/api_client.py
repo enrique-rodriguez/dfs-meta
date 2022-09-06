@@ -2,7 +2,6 @@ import json
 from unittest import mock
 from app import get_app
 from webtest import TestApp
-from metadata.bootstrap import bootstrap
 
 
 config = {}
@@ -16,8 +15,7 @@ def set_config(new_config):
 def use_client(func):
     def inner(*args, **kwargs):
         publisher = mock.Mock()
-        bus = bootstrap(config)
-        app = get_app(bus, config, publisher=publisher)
+        app = get_app(config, publisher=publisher)
         return func(client=TestApp(app), *args, **kwargs)
 
     return inner
@@ -33,7 +31,7 @@ def list_files(client: TestApp):
 
 
 @use_client
-def create_file(client, name=None, size=None, expect_errors=False):
+def create_file(client, name=None, size=None, expect_errors=True):
     data = {}
 
     if name:

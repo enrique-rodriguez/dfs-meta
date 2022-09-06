@@ -4,16 +4,19 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-pika = "*"
 bottle = "*"
-paste = "*"
 requests = "*"
 dfs-shared = {git = "https://github.com/enrique-rodriguez/dfs-shared"}
+paste = "*"
+pika = "*"
 
 [dev-packages]
 pytest = "*"
+black = "*"
 webtest = "*"
-pytest-cov = "*"
 
 [requires]
-python_version = "3.10"
+python_version = "3.9"
+
+[pipenv]
+allow_prereleases = true

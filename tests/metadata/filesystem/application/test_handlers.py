@@ -16,17 +16,11 @@ def test_create_datanode(bus, uow):
     assert datanode.address.host == "127.0.0.1"
 
 
-def test_create_existing_datanode_updates_timestamp(bus, uow):
-    def create_and_get_timestamp():
+def test_raises_error_if_datanode_with_host_and_port_exists(bus):
+    bus.handle(commands.CreateDataNode("1", "127.0.0.1", 8000))
+
+    with pytest.raises(exceptions.DuplicateDataNodeError):
         bus.handle(commands.CreateDataNode("1", "127.0.0.1", 8000))
-        datanode = uow.repository.get(model.DataNode, id="1")
-        return datanode.timestamp
-
-    timestamp1 = create_and_get_timestamp()
-    timestamp2 = create_and_get_timestamp()
-
-    assert timestamp1 != timestamp2
-
 
 
 def test_creates_file(bus, uow):

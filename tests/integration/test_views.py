@@ -26,7 +26,7 @@ def test_removes_file_and_blocks_from_read_model(bus):
                 {"id": "1", "datanode_id": did1},
             ],
         ),
-        commands.DeleteFile(file_id=fid),
+        commands.DeleteFile(file_id=fid)
     ]
 
     for cmd in history:
@@ -42,26 +42,8 @@ def test_adds_datanode_to_read_model(bus):
     port = 8000
 
     bus.handle(commands.CreateDataNode(datanode_id=did, host=host, port=port))
-    nodes = views.list_datanodes(bus.uow)
-    nodes[0].pop("timestamp")
 
-    assert nodes == [{"id": did, "host": host, "port": port}]
-
-
-def test_updates_datanode_timestamp_from_read_model_when_node_exists(bus):
-    def get_timestamp(did, host, port):
-        bus.handle(commands.CreateDataNode(datanode_id=did, host=host, port=port))
-        nodes = views.list_datanodes(bus.uow)
-        return nodes[0].get("timestamp")
-
-    did = uuid.uuid4().hex
-    host = "127.0.0.1"
-    port = 8000
-
-    timestamp1 = get_timestamp(did, host, port)
-    timestamp2 = get_timestamp(did, host, port)
-
-    assert timestamp1 != timestamp2
+    assert views.list_datanodes(bus.uow) == [{"id": did, "host": host, "port": port}]
 
 
 def test_adds_blocks_to_read_model(bus):
