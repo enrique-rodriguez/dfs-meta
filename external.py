@@ -8,3 +8,6 @@ def register_datanode(bus, body, logger):
     port = body.get("port")
     logger.info(f"Registrating datanode at {host}:{port}")
     bus.handle(commands.CreateDataNode(datanode_id=did, host=host, port=port))
+
+
+HANDLERS = {"datanodes": [register_datanode]}
