@@ -16,8 +16,8 @@ def set_config(new_config):
 def use_client(func):
     def inner(*args, **kwargs):
         publisher = mock.Mock()
-        bus = bootstrap(config, publisher=publisher)
-        app = get_app(bus, config)
+        bus = bootstrap(config)
+        app = get_app(bus, config, publisher=publisher)
         return func(client=TestApp(app), *args, **kwargs)
 
     return inner
