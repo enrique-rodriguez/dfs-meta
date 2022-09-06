@@ -1,4 +1,3 @@
-from unittest import mock
 import pytest
 from metadata.bootstrap import bootstrap
 
@@ -13,4 +12,4 @@ def config(tmp_path):
 
 @pytest.fixture
 def bus(config):
-    return bootstrap(config, publisher=mock.Mock())
+    return bootstrap(config)

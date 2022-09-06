@@ -1,5 +1,4 @@
 import json
-from unittest import mock
 from app import get_app
 from webtest import TestApp
 
@@ -14,9 +13,7 @@ def set_config(new_config):
 
 def use_client(func):
     def inner(*args, **kwargs):
-        publisher = mock.Mock()
-        app = get_app(config, publisher=publisher)
-        return func(client=TestApp(app), *args, **kwargs)
+        return func(client=TestApp(get_app(config)), *args, **kwargs)
 
     return inner
 

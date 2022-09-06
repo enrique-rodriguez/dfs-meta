@@ -1,18 +1,9 @@
 import pytest
-from collections import defaultdict
 from metadata.bootstrap import bootstrap
 from dfs_shared.application.uow import UnitOfWork
 from dfs_shared.domain.repository import RepositoryManager
 from dfs_shared.infrastructure.inmemory_repo import InMemoryRepository
 from metadata.filesystem.infrastructure.json_db import JsonDatabase
-
-
-class FakePublisher:
-    def __init__(self):
-        self.published = defaultdict(list)
-
-    def publish(self, exchange, channel, data):
-        self.published[channel].append(data)
 
 
 class InMemoryRepositoryManager(RepositoryManager):
@@ -45,16 +36,11 @@ def config(tmp_path):
 
 
 @pytest.fixture
-def bus(uow, publisher, config):
-    return bootstrap(config=config, uow=uow, publisher=publisher)
-
-
-@pytest.fixture
-def publisher():
-    return FakePublisher()
+def bus(uow, config):
+    return bootstrap(config=config, uow=uow)
 
 
 @pytest.fixture
 def uow(config):
-    read_model_path = config.get("basedir") + config["db"].get("read_model_path")
+    read_model_path = config.get("basedir")+config["db"].get("read_model_path")
     return FakeUnitOfWork(seen=set(), read_model_path=read_model_path)
