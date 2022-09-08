@@ -1,7 +1,7 @@
 from dfs_shared.application import uow
 from dfs_shared.domain.repository import RepositoryManager
 from metadata.filesystem.infrastructure.pickle_repo import PickleRepository
-from metadata.filesystem.infrastructure.json_db import JsonDatabase
+from metadata.filesystem.infrastructure.json_read_model import JsonReadModel
 
 
 class PickleRepositoryManager(RepositoryManager):
@@ -27,7 +27,7 @@ class PickleRepositoryManager(RepositoryManager):
 class PickleUnitOfWork(uow.UnitOfWork):
     def __init__(self, repo_path, read_model_path, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.read_model = JsonDatabase(read_model_path)
+        self.read_model = JsonReadModel(read_model_path)
         self.repository = PickleRepositoryManager(repo_path, seen=self.seen)
 
     def __enter__(self):
@@ -40,6 +40,8 @@ class PickleUnitOfWork(uow.UnitOfWork):
 
     def commit(self):
         self.repository.commit()
+        self.read_model.commit()
 
     def rollback(self):
         self.repository.rollback()
+        self.read_model.rollback()

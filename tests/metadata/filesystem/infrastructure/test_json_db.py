@@ -1,7 +1,7 @@
 import json
 import os
 import pytest
-from metadata.filesystem.infrastructure.json_db import JsonDatabase
+from metadata.filesystem.infrastructure.json_read_model import JsonReadModel
 
 
 @pytest.fixture
@@ -9,7 +9,7 @@ def get_repo(tmp_path):
 
     def factory(path=None, auto_commit=False):
         path = path or os.path.join(tmp_path, "db.json")
-        return JsonDatabase(path, auto_commit)
+        return JsonReadModel(path, auto_commit)
 
     return factory
 
