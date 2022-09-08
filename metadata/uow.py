@@ -1,4 +1,3 @@
-import pymongo
 from dfs_shared.application import uow
 from dfs_shared.domain.repository import RepositoryManager
 from metadata.filesystem.infrastructure.pickle_repo import PickleRepository
@@ -33,13 +32,10 @@ class PickleUnitOfWork(uow.UnitOfWork):
         self.repository = PickleRepositoryManager(repo_path, seen=self.seen)
 
     def __enter__(self):
-        self.client = pymongo.MongoClient()
-        self.database = self.client[self.dbname]
         self.repository.set_autocommit(False)
         return super().__enter__()
 
     def __exit__(self, *args, **kwargs):
-        self.client.close()
         self.repository.set_autocommit(True)
         return super().__exit__(*args, **kwargs)
 
