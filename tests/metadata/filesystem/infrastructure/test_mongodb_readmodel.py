@@ -1,6 +1,12 @@
 import pytest
-import pymongo
 from metadata.filesystem.infrastructure.mongodb_readmodel import MongoDbReadModel
+
+try:
+    import pymongo
+
+    PYMONGO_INSTALLED = True
+except:
+    PYMONGO_INSTALLED = False
 
 
 @pytest.fixture
@@ -14,6 +20,7 @@ def readmodel():
     client.close()
 
 
+@pytest.mark.skipif(not PYMONGO_INSTALLED, reason="pymongo not installed")
 def test_insert(readmodel):
     readmodel.insert(
         "mycollection",
@@ -31,10 +38,12 @@ def test_insert(readmodel):
     ]
 
 
+@pytest.mark.skipif(not PYMONGO_INSTALLED, reason="pymongo not installed")
 def test_get_gives_none_if_not_found(readmodel):
     assert readmodel.get("mycollection", name="john") == None
 
 
+@pytest.mark.skipif(not PYMONGO_INSTALLED, reason="pymongo not installed")
 def test_get(readmodel):
     readmodel.insert("mycollection", {"name": "john"})
     readmodel.insert("mycollection", {"name": "bob"})
@@ -42,6 +51,7 @@ def test_get(readmodel):
     assert readmodel.get("mycollection", name="john") == {"name": "john"}
 
 
+@pytest.mark.skipif(not PYMONGO_INSTALLED, reason="pymongo not installed")
 def test_delete(readmodel):
     collection_name = "mycollection"
 
@@ -55,6 +65,7 @@ def test_delete(readmodel):
     assert readmodel.all(collection_name) == [{"name": "bob"}]
 
 
+@pytest.mark.skipif(not PYMONGO_INSTALLED, reason="pymongo not installed")
 def test_delete_many(readmodel):
     collection_name = "mycollection"
 
