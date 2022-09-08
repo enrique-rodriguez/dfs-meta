@@ -1,3 +1,4 @@
+from unittest import mock
 import pytest
 from metadata.bootstrap import bootstrap
 from dfs_shared.application.uow import UnitOfWork
@@ -17,6 +18,7 @@ class FakeUnitOfWork(UnitOfWork):
         self.read_model = JsonReadModel(read_model_path)
 
     def __enter__(self):
+        self.database = mock.Mock()
         self.committed = False
         return super().__enter__()
 
