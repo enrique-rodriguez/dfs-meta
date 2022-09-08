@@ -56,72 +56,68 @@ def add_blocks(cmd: commands.AddBlocks, uow: UnitOfWork):
 
 
 def add_file_to_read_model(event: events.FileCreated, uow: UnitOfWork):
-    files = uow.read_model.get("files", list())
     f = event.file
 
-    files.append(
-        {
-            "id": f.id,
-            "name": f.name,
-            "size": f.size,
-        }
-    )
-
-    uow.read_model.set("files", files)
-    uow.read_model.commit()
+    with uow:
+        collection = uow.database.files
+        collection.insert_one(
+            {
+                "id": f.id,
+                "name": f.name,
+                "size": f.size,
+            }
+        )
+        uow.commit()
 
 
 def remove_file_from_read_model(event: events.FileDeleted, uow: UnitOfWork):
     file = event.file
-    files = uow.read_model.get("files", list())
 
-    files = list(filter(lambda f: f.get("id") != file.id, files))
-
-    uow.read_model.set("files", files)
-    uow.read_model.commit()
+    with uow:
+        collection = uow.database.files
+        collection.delete_one({"id": file.id})
+        uow.commit()
 
 
 def add_datanode_to_read_model(event: events.DataNodeCreated, uow: UnitOfWork):
-    datanodes = uow.read_model.get("datanodes", list())
     dnode = event.datanode
 
-    datanodes.append(
-        {
-            "id": dnode.id,
-            "host": dnode.address.host,
-            "port": dnode.address.port,
-        }
-    )
-
-    uow.read_model.set("datanodes", datanodes)
-    uow.read_model.commit()
+    with uow:
+        collection = uow.database.datanodes
+        collection.insert_one(
+            {
+                "id": dnode.id,
+                "host": dnode.address.host,
+                "port": dnode.address.port,
+            }
+        )
+        uow.commit()
 
 
 def add_block_to_read_model(event: events.BlockAdded, uow: UnitOfWork):
     blk = event.block
-    blocks = uow.read_model.get("blocks", list())
     dnode = uow.repository.get(model.DataNode, id=blk.datanode_id)
 
-    blocks.append(
-        {
-            "file_id": blk.file_id,
-            "id": blk.id,
-            "datanode": {
-                "id": dnode.id,
-                "host": dnode.address.host,
-                "port": dnode.address.port,
-            },
-        }
-    )
-
-    uow.read_model.set("blocks", blocks)
-    uow.read_model.commit()
+    with uow:
+        collection = uow.database.blocks
+        collection.insert_one(
+            {
+                "file_id": blk.file_id,
+                "id": blk.id,
+                "datanode": {
+                    "id": dnode.id,
+                    "host": dnode.address.host,
+                    "port": dnode.address.port,
+                },
+            }
+        )
+        uow.commit()
 
 
 def remove_blocks_from_read_model(event: events.FileDeleted, uow: UnitOfWork):
     file = event.file
-    blocks = uow.read_model.get("blocks", list())
-    blocks = list(filter(lambda b: b.get("file_id") != file.id, blocks))
 
-    uow.read_model.set("blocks", blocks)
-    uow.read_model.commit()
+    with uow:
+        collection = uow.database.blocks
+        collection.delete_many({'file_id': file.id})
+        uow.commit()
